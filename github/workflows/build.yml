@@ -1,0 +1,31 @@
+name: Build Betaflight (Custom Failsafe 30min)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install deps
+        run: |
+          sudo apt update
+          sudo apt install -y build-essential git python3
+
+      - name: Apply failsafe patch (30 min)
+        run: |
+          sed -i 's/#define FAILSAFE_OFF_DELAY_MAX.*/#define FAILSAFE_OFF_DELAY_MAX 3600/' src/main/flight/failsafe.h
+
+      - name: Build firmware
+        run: |
+          make TARGET=BEASTFPVF722
+
+      - name: Upload HEX
+        uses: actions/upload-artifact@v4
+        with:
+          name: firmware
+          path: obj/main/BEASTFPVF722/*.hex
