@@ -1,0 +1,34 @@
+name: Build BF 4.4 Custom
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Betaflight 4.4
+      uses: actions/checkout@v4
+      with:
+        repository: betaflight/betaflight
+        ref: 4.4
+
+    - name: Install dependencies
+      run: |
+        sudo apt update
+        sudo apt install -y build-essential gcc-arm-none-eabi git make
+
+    - name: Patch failsafe (30 min unlock)
+      run: |
+        sed -i 's/#define FAILSAFE_OFF_DELAY_MAX.*/#define FAILSAFE_OFF_DELAY_MAX 20000/' src/main/flight/failsafe.h
+
+    - name: Build firmware
+      run: |
+        make TARGET=BEASTFPVF722
+
+    - name: Upload HEX
+      uses: actions/upload-artifact@v4
+      with:
+        name: firmware
+        path: obj/*.hex
