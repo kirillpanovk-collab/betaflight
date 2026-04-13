@@ -1,0 +1,36 @@
+name: Build Betaflight 4.2 (Custom)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Betaflight 4.2
+      uses: actions/checkout@v4
+      with:
+        repository: betaflight/betaflight
+        ref: 4.2.11   # ВАЖНО! Совместимо с Configurator 10.10
+        submodules: recursive
+
+    - name: Install dependencies
+      run: |
+        sudo apt update
+        sudo apt install -y build-essential git python3 python3-pip \
+        gcc-arm-none-eabi libnewlib-arm-none-eabi
+
+    - name: Patch failsafe (30 min)
+      run: |
+        sed -i 's/#define FAILSAFE_OFF_DELAY_DEFAULT.*/#define FAILSAFE_OFF_DELAY_DEFAULT 18000/' src/main/flight/failsafe.h
+
+    - name: Build firmware
+      run: |
+        make TARGET=BEASTF7
+
+    - name: Upload HEX
+      uses: actions/upload-artifact@v4
+      with:
+        name: firmware
+        path: obj/*.hex
