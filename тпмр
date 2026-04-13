@@ -1,0 +1,32 @@
+name: Build Betaflight (Custom)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt update
+          sudo apt install -y build-essential gcc-arm-none-eabi git make python3
+
+      - name: Clean
+        run: make clean
+
+      - name: Build firmware (BEASTFPVF722)
+        run: |
+          make BEASTFPVF722 EXTRA_FLAGS="-DCUSTOM_FAILSAFE"
+
+      - name: Upload HEX
+        uses: actions/upload-artifact@v4
+        with:
+          name: firmware
+          path: |
+            obj/*.hex
