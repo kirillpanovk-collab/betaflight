@@ -1,0 +1,31 @@
+name: Build Betaflight HEX (30min failsafe)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Install toolchain
+      run: |
+        sudo apt update
+        sudo apt install -y build-essential gcc-arm-none-eabi
+
+    - name: Patch failsafe to 30 minutes
+      run: |
+        sed -i 's/failsafeConfig()->failsafe_landing_time \* 1000/1800000/g' src/main/flight/failsafe.c
+
+    - name: Build firmware
+      run: |
+        make TARGET=STM32F7X2
+
+    - name: Upload HEX
+      uses: actions/upload-artifact@v4
+      with:
+        name: firmware
+        path: obj/main/STM32F7X2/*.hex
