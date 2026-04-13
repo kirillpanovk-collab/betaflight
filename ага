@@ -1,0 +1,32 @@
+name: Build Betaflight Custom HEX
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Betaflight
+      uses: actions/checkout@v4
+
+    - name: Install dependencies
+      run: |
+        sudo apt update
+        sudo apt install -y build-essential gcc-arm-none-eabi git make python3
+
+    - name: Patch failsafe (30 minutes)
+      run: |
+        sed -i 's/#define FAILSAFE_OFF_DELAY.*/#define FAILSAFE_OFF_DELAY 1800/' src/main/config/failsafe.h || true
+        sed -i 's/#define FAILSAFE_DELAY.*/#define FAILSAFE_DELAY 200/' src/main/config/failsafe.h || true
+
+    - name: Build firmware
+      run: |
+        make TARGET=BEASTFPVF722
+
+    - name: Upload HEX
+      uses: actions/upload-artifact@v4
+      with:
+        name: custom-firmware
+        path: obj/*.hex
